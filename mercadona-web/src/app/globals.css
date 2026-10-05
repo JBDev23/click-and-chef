@@ -1,22 +1,55 @@
 @import 'tailwindcss';
 
 :root {
-  --mercadona-green: #00824B;
-  --mercadona-orange: #FFA100;
-  --mercadona-yellow: #FFC300;
-  --font-mercadona-logo: 'Frankfurter', var(--font-geist-sans), sans-serif;
-  --font-mercadona-text: 'Berliner', var(--font-geist-sans), sans-serif;
+  --mercadona-green: #00824b;
+  --mercadona-orange: #ffa100;
+  --mercadona-yellow: #ffc300;
+  --font-mercadona-logo: Arial, Helvetica, sans-serif;
+  --font-mercadona-text: Arial, Helvetica, sans-serif;
 }
 
 @theme {
   --color-primary: var(--mercadona-green);
   --color-secondary: var(--mercadona-orange);
-  
+
   --color-mercadona-green: var(--mercadona-green);
   --color-mercadona-orange: var(--mercadona-orange);
   --color-mercadona-yellow: var(--mercadona-yellow);
-  
-  --font-sans: var(--font-geist-sans);
+
+  --color-home-green: #3f8960;
+  --color-home-accent: #4aa675;
+  --color-home-panel: #f4faf7;
+  --color-home-border: #d3e7de;
+  --color-home-muted: #777777;
+  --color-home-ink: #214e52;
+
+  --font-sans: Arial, Helvetica, sans-serif;
   --font-mercadona-logo: var(--font-mercadona-logo);
   --font-mercadona-text: var(--font-mercadona-text);
+}
+
+@layer base {
+  :focus-visible {
+    outline: 2px solid #214e52;
+    outline-offset: 2px;
+  }
+}
+
+.home-shell {
+  width: 100%;
+  max-width: 1576px;
+  margin-inline: auto;
+  padding-inline: 16px;
+}
+
+@media (min-width: 768px) {
+  .home-shell {
+    padding-inline: 32px;
+  }
+}
+
+@media (min-width: 1640px) {
+  .home-shell {
+    padding-inline: 0;
+  }
 }
