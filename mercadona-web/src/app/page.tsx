@@ -1,49 +1,31 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useSearchParams } from 'next/navigation';
+import { Suspense, useState } from 'react';
 import { DeliveryNotice } from '@/features/home/components/DeliveryNotice';
-import { FulfillmentModal } from '@/features/home/components/FulfillmentModal';
+import { FulfillmentOptions } from '@/features/home/components/FulfillmentOptions';
 import { MealIdeaForm } from '@/features/home/components/MealIdeaForm';
 import { MercadonaHeader } from '@/features/home/components/MercadonaHeader';
 import { QuickIdeas } from '@/features/home/components/QuickIdeas';
 import { StorefrontHighlights } from '@/features/home/components/StorefrontHighlights';
-import { KitModal } from '@/features/kit/components/KitModal';
 
-type MealFlow =
-  | { step: 'choose'; idea: string }
-  | { step: 'kit'; idea: string }
-  | null;
+const INITIAL_IDEA = 'Pasta para 4';
 
-export default function Home() {
-  const router = useRouter();
-  const [draft, setDraft] = useState('');
-  const [confirmedIdea, setConfirmedIdea] = useState<string | null>(null);
+function HomeContent({ initialIdea }: { initialIdea: string }) {
+  const [draft, setDraft] = useState(initialIdea);
+  const [confirmedIdea, setConfirmedIdea] = useState(initialIdea);
   const [error, setError] = useState<string | null>(null);
-  const [flow, setFlow] = useState<MealFlow>(null);
 
   function confirmIdea(value: string) {
     const next = value.trim();
     if (!next) {
       setError('Escribe una idea para continuar.');
-      setConfirmedIdea(null);
-      setFlow(null);
       return;
     }
 
     setDraft(next);
     setConfirmedIdea(next);
     setError(null);
-    setFlow({ step: 'choose', idea: next });
-  }
-
-  function closeFlow() {
-    setFlow(null);
-  }
-
-  function goToDishes(idea: string) {
-    closeFlow();
-    router.push(`/platos?idea=${encodeURIComponent(idea)}`);
   }
 
   return (
@@ -58,55 +40,40 @@ export default function Home() {
           <MealIdeaForm
             value={draft}
             error={error}
-            showConfirmation={confirmedIdea !== null && error === null}
+            showConfirmation={error === null}
             onChange={(value) => {
               setDraft(value);
               if (value.trim()) {
                 setError(null);
               }
-              if (confirmedIdea !== null && value.trim() !== confirmedIdea) {
-                setConfirmedIdea(null);
-              }
             }}
             onSubmit={() => confirmIdea(draft)}
           />
-          <QuickIdeas
-            selectedIdea={confirmedIdea ?? draft}
-            onSelect={(idea) => {
-              setDraft(idea);
-              confirmIdea(idea);
-            }}
-          />
+          <QuickIdeas selectedIdea={confirmedIdea} onSelect={confirmIdea} />
+          <FulfillmentOptions idea={confirmedIdea} />
         </section>
         <StorefrontHighlights />
       </main>
-
-      <FulfillmentModal
-        open={flow?.step === 'choose'}
-        idea={flow?.step === 'choose' ? flow.idea : ''}
-        onClose={closeFlow}
-        onChooseReady={() => {
-          if (flow?.step === 'choose') {
-            goToDishes(flow.idea);
-          }
-        }}
-        onChooseKit={() => {
-          if (flow?.step === 'choose') {
-            setFlow({ step: 'kit', idea: flow.idea });
-          }
-        }}
-      />
-
-      <KitModal
-        open={flow?.step === 'kit'}
-        idea={flow?.step === 'kit' ? flow.idea : ''}
-        onClose={closeFlow}
-        onViewDishes={() => {
-          if (flow?.step === 'kit') {
-            goToDishes(flow.idea);
-          }
-        }}
-      />
     </div>
+  );
+}
+
+function HomeWithParams() {
+  const searchParams = useSearchParams();
+  const idea = searchParams.get('idea')?.trim() || INITIAL_IDEA;
+  return <HomeContent key={idea} initialIdea={idea} />;
+}
+
+export default function Home() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center text-home-muted">
+          Cargando…
+        </div>
+      }
+    >
+      <HomeWithParams />
+    </Suspense>
   );
 }

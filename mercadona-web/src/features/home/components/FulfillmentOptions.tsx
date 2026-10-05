@@ -1,9 +1,10 @@
 'use client';
 
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { House, Sparkles } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import { FulfillmentCard } from '@/features/home/components/FulfillmentCard';
+import { buildFlowQuery, parseServingsFromIdea } from '@/features/dishes/utils/dish-presentation';
 
 type FulfillmentOptionsProps = {
   idea: string;
@@ -11,6 +12,11 @@ type FulfillmentOptionsProps = {
 
 export function FulfillmentOptions({ idea }: FulfillmentOptionsProps) {
   const router = useRouter();
+
+  function openDishes() {
+    const servings = parseServingsFromIdea(idea);
+    router.push(`/platos${buildFlowQuery(idea, servings)}`);
+  }
 
   return (
     <div className="mt-8 border-t border-home-border pt-8">
@@ -31,11 +37,8 @@ export function FulfillmentOptions({ idea }: FulfillmentOptionsProps) {
           title="Te lo damos hecho"
           description="Elige un plato, personaliza sus ingredientes y lo preparamos al momento."
           actionLabel="Ver platos"
+          onAction={openDishes}
           icon={<Sparkles aria-hidden="true" className="size-6" strokeWidth={1.75} />}
-          onAction={() => {
-            const params = new URLSearchParams({ idea });
-            router.push(`/platos?${params.toString()}`);
-          }}
         />
         <FulfillmentCard
           variant="kit"
@@ -44,11 +47,11 @@ export function FulfillmentOptions({ idea }: FulfillmentOptionsProps) {
           description="Recibe todos los ingredientes en las cantidades justas y sigue la receta paso a paso."
           actionLabel="Crear mi kit"
           badge="MercaKit"
-          icon={<House aria-hidden="true" className="size-6" strokeWidth={1.75} />}
           onAction={() => {
             const params = new URLSearchParams({ idea });
             router.push(`/kit?${params.toString()}`);
           }}
+          icon={<House aria-hidden="true" className="size-6" strokeWidth={1.75} />}
         />
       </div>
 

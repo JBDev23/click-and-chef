@@ -1,14 +1,12 @@
-import { Suspense } from 'react';
-import { DishesPage } from '@/features/dishes/components/DishesPage';
+import { DishCatalog } from '@/features/dishes/components/DishCatalog';
 
-export default function PlatosRoute() {
-  return (
-    <Suspense
-      fallback={
-        <div className="home-shell py-16 text-home-muted">Cargando platos…</div>
-      }
-    >
-      <DishesPage />
-    </Suspense>
-  );
+type PlatosPageProps = {
+  searchParams: Promise<{ idea?: string; servings?: string }>;
+};
+
+export default async function PlatosPage({ searchParams }: PlatosPageProps) {
+  const params = await searchParams;
+  const idea = params.idea?.trim() || 'Pasta para 4';
+
+  return <DishCatalog idea={idea} servingsParam={params.servings} />;
 }

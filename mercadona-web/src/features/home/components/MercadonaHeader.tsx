@@ -3,28 +3,13 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { ChevronDown, Search, ShoppingCart } from 'lucide-react';
-import { useQuery } from '@tanstack/react-query';
-import { countKitCartProducts, fetchKitCartLines } from '@/lib/cart/kit-session';
-import { fetchCurrentCart } from '@/lib/cart/session';
-import { queryKeys } from '@/lib/query-keys';
+import { useCart } from '@/features/cart/hooks/use-cart';
 
 const shell =
   'home-shell grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-x-4 gap-y-3 py-3 lg:h-[70px] lg:grid-cols-[auto_minmax(0,1fr)_auto_auto] lg:gap-x-10 lg:py-0';
 
 export function MercadonaHeader() {
-  const cartQuery = useQuery({
-    queryKey: queryKeys.cart,
-    queryFn: fetchCurrentCart,
-  });
-
-  const kitCartQuery = useQuery({
-    queryKey: queryKeys.kitCart,
-    queryFn: fetchKitCartLines,
-  });
-
-  const dishCount = cartQuery.data?.items.length ?? 0;
-  const kitProductCount = countKitCartProducts(kitCartQuery.data ?? []);
-  const itemCount = dishCount + kitProductCount;
+  const { togglePanel, itemCount, isHydrated } = useCart();
 
   return (
     <header className="border-b border-[#e6e6e6] bg-white">
@@ -53,18 +38,21 @@ export function MercadonaHeader() {
             Identifícate
             <ChevronDown aria-hidden="true" className="size-[18px]" />
           </button>
-          <Link
-            href="/carrito"
-            aria-label={itemCount > 0 ? `Carrito con ${itemCount} artículos` : 'Carrito'}
+          <button
+            type="button"
+            aria-label={
+              isHydrated && itemCount > 0 ? `Abrir carrito, ${itemCount} raciones` : 'Abrir carrito'
+            }
+            onClick={togglePanel}
             className="relative rounded-sm p-1 text-[#333333]"
           >
             <ShoppingCart aria-hidden="true" className="size-[26px]" strokeWidth={1.75} />
-            {itemCount > 0 ? (
-              <span className="absolute -top-1 -right-1 flex size-5 items-center justify-center rounded-full bg-home-green text-[11px] font-medium text-white">
-                {itemCount > 9 ? '9+' : itemCount}
+            {isHydrated && itemCount > 0 ? (
+              <span className="absolute -top-1 -right-1 inline-flex min-w-5 items-center justify-center rounded-full bg-home-green px-1 text-[11px] font-medium text-white">
+                {itemCount}
               </span>
             ) : null}
-          </Link>
+          </button>
         </div>
 
         <div
