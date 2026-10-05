@@ -80,7 +80,7 @@ export function MealIdeaForm({
             </p>
           ) : showConfirmation ? (
             <p className="text-[15px] text-home-muted sm:text-[16px]">
-              Perfecto, vamos a buscar platos que encajen con tu idea.
+              Perfecto. Elige cómo quieres disfrutarlo.
             </p>
           ) : null}
         </div>

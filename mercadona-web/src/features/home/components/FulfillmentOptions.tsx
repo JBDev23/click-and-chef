@@ -1,7 +1,8 @@
 'use client';
 
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { House, Sparkles } from 'lucide-react';
-import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { FulfillmentCard } from '@/features/home/components/FulfillmentCard';
 
 type FulfillmentOptionsProps = {
@@ -9,42 +10,7 @@ type FulfillmentOptionsProps = {
 };
 
 export function FulfillmentOptions({ idea }: FulfillmentOptionsProps) {
-  const [kitDialogOpen, setKitDialogOpen] = useState(false);
-  const kitButtonRef = useRef<HTMLButtonElement>(null);
-  const closeButtonRef = useRef<HTMLButtonElement>(null);
-  const titleId = useId();
-  const descriptionId = useId();
-
-  const closeDialog = useCallback(() => {
-    setKitDialogOpen(false);
-    kitButtonRef.current?.focus();
-  }, []);
-
-  useEffect(() => {
-    if (!kitDialogOpen) {
-      return;
-    }
-
-    closeButtonRef.current?.focus();
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        closeDialog();
-      }
-      if (event.key === 'Tab') {
-        event.preventDefault();
-        closeButtonRef.current?.focus();
-      }
-    };
-
-    document.addEventListener('keydown', onKeyDown);
-    return () => {
-      document.body.style.overflow = previousOverflow;
-      document.removeEventListener('keydown', onKeyDown);
-    };
-  }, [closeDialog, kitDialogOpen]);
+  const router = useRouter();
 
   return (
     <div className="mt-8 border-t border-home-border pt-8">
@@ -66,7 +32,10 @@ export function FulfillmentOptions({ idea }: FulfillmentOptionsProps) {
           description="Elige un plato, personaliza sus ingredientes y lo preparamos al momento."
           actionLabel="Ver platos"
           icon={<Sparkles aria-hidden="true" className="size-6" strokeWidth={1.75} />}
-          // La web todavía no tiene pantalla de catálogo. El listado vive en GET /api/v1/dishes.
+          onAction={() => {
+            const params = new URLSearchParams({ idea });
+            router.push(`/platos?${params.toString()}`);
+          }}
         />
         <FulfillmentCard
           variant="kit"
@@ -75,42 +44,20 @@ export function FulfillmentOptions({ idea }: FulfillmentOptionsProps) {
           description="Recibe todos los ingredientes en las cantidades justas y sigue la receta paso a paso."
           actionLabel="Crear mi kit"
           badge="MercaKit"
-          actionRef={kitButtonRef}
-          onAction={() => setKitDialogOpen(true)}
           icon={<House aria-hidden="true" className="size-6" strokeWidth={1.75} />}
+          onAction={() => {
+            const params = new URLSearchParams({ idea });
+            router.push(`/kit?${params.toString()}`);
+          }}
         />
       </div>
 
-      {kitDialogOpen ? (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
-          onMouseDown={closeDialog}
-        >
-          <div
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby={titleId}
-            aria-describedby={descriptionId}
-            className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl"
-            onMouseDown={(event) => event.stopPropagation()}
-          >
-            <h2 id={titleId} className="text-[22px] font-medium text-home-ink">
-              Próximamente
-            </h2>
-            <p id={descriptionId} className="mt-2 text-[15px] text-home-muted">
-              MercaKit todavía no está disponible.
-            </p>
-            <button
-              ref={closeButtonRef}
-              type="button"
-              onClick={closeDialog}
-              className="mt-5 inline-flex h-11 items-center rounded-full bg-home-green px-5 text-[15px] font-medium text-white"
-            >
-              Cerrar
-            </button>
-          </div>
-        </div>
-      ) : null}
+      <p className="mt-4 text-[13px] text-home-muted">
+        ¿Prefieres explorar el catálogo sin la idea?{' '}
+        <Link href="/platos" className="font-medium text-home-green underline-offset-2 hover:underline">
+          Ver todos los platos
+        </Link>
+      </p>
     </div>
   );
 }

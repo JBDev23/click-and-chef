@@ -42,6 +42,21 @@
   padding-inline: 16px;
 }
 
+@keyframes kit-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.kit-fade-in {
+  animation: kit-fade-in 420ms ease-out both;
+}
+
 @media (min-width: 768px) {
   .home-shell {
     padding-inline: 32px;

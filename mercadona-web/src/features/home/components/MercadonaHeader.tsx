@@ -1,11 +1,31 @@
+'use client';
+
 import Image from 'next/image';
 import Link from 'next/link';
 import { ChevronDown, Search, ShoppingCart } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { countKitCartProducts, fetchKitCartLines } from '@/lib/cart/kit-session';
+import { fetchCurrentCart } from '@/lib/cart/session';
+import { queryKeys } from '@/lib/query-keys';
 
 const shell =
   'home-shell grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-x-4 gap-y-3 py-3 lg:h-[70px] lg:grid-cols-[auto_minmax(0,1fr)_auto_auto] lg:gap-x-10 lg:py-0';
 
 export function MercadonaHeader() {
+  const cartQuery = useQuery({
+    queryKey: queryKeys.cart,
+    queryFn: fetchCurrentCart,
+  });
+
+  const kitCartQuery = useQuery({
+    queryKey: queryKeys.kitCart,
+    queryFn: fetchKitCartLines,
+  });
+
+  const dishCount = cartQuery.data?.items.length ?? 0;
+  const kitProductCount = countKitCartProducts(kitCartQuery.data ?? []);
+  const itemCount = dishCount + kitProductCount;
+
   return (
     <header className="border-b border-[#e6e6e6] bg-white">
       <div className={shell}>
@@ -33,9 +53,18 @@ export function MercadonaHeader() {
             Identifícate
             <ChevronDown aria-hidden="true" className="size-[18px]" />
           </button>
-          <button type="button" aria-label="Carrito" className="rounded-sm p-1 text-[#333333]">
+          <Link
+            href="/carrito"
+            aria-label={itemCount > 0 ? `Carrito con ${itemCount} artículos` : 'Carrito'}
+            className="relative rounded-sm p-1 text-[#333333]"
+          >
             <ShoppingCart aria-hidden="true" className="size-[26px]" strokeWidth={1.75} />
-          </button>
+            {itemCount > 0 ? (
+              <span className="absolute -top-1 -right-1 flex size-5 items-center justify-center rounded-full bg-home-green text-[11px] font-medium text-white">
+                {itemCount > 9 ? '9+' : itemCount}
+              </span>
+            ) : null}
+          </Link>
         </div>
 
         <div
@@ -63,12 +92,12 @@ export function MercadonaHeader() {
           aria-label="Secciones"
           className="col-span-3 row-start-3 flex items-center gap-6 text-[15px] font-normal text-[#333333] lg:col-span-1 lg:col-start-3 lg:row-start-1 lg:gap-12 lg:text-[16px]"
         >
-          <a href="#categorias" className="rounded-sm whitespace-nowrap">
-            Categorías
-          </a>
-          <a href="#listas" className="rounded-sm whitespace-nowrap">
-            Listas
-          </a>
+          <Link href="/platos" className="rounded-sm whitespace-nowrap">
+            Platos
+          </Link>
+          <Link href="/carrito" className="rounded-sm whitespace-nowrap">
+            Carrito
+          </Link>
         </nav>
       </div>
     </header>
