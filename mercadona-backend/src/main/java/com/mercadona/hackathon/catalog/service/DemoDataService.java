@@ -57,8 +57,8 @@ public class DemoDataService {
     if (dishes.findBySlug("ensalada-pasta-atun").isPresent()) return;
     Dish dish = new Dish("ensalada-pasta-atun", "Ensalada de pasta con atún", new BigDecimal("6.50"));
     ingredient(dish, 2132, 100, 500, MeasurementUnit.G);
-    ingredient(dish, 1929, 60, 180, MeasurementUnit.G);
-    ingredient(dish, 40, 80, 250, MeasurementUnit.G);
+    ingredient(dish, 1929, 75, 180, MeasurementUnit.G);
+    ingredient(dish, 40, 75, 250, MeasurementUnit.G);
     dishes.save(dish);
   }
 
@@ -67,8 +67,8 @@ public class DemoDataService {
     Dish dish = new Dish("lasana-verduras", "Lasaña de verduras", new BigDecimal("7.20"));
     ingredient(dish, 2171, 100, 200, MeasurementUnit.G);
     ingredient(dish, 1133, 100, 600, MeasurementUnit.ML);
-    ingredient(dish, 2580, 80, 1000, MeasurementUnit.G);
-    ingredient(dish, 692, 40, 200, MeasurementUnit.G);
+    ingredient(dish, 2580, 75, 1000, MeasurementUnit.G);
+    ingredient(dish, 692, 50, 200, MeasurementUnit.G);
     dishes.save(dish);
   }
 
