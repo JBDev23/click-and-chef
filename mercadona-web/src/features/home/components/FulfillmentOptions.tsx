@@ -1,14 +1,17 @@
 'use client';
 
 import { House, Sparkles } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { FulfillmentCard } from '@/features/home/components/FulfillmentCard';
+import { buildFlowQuery, parseServingsFromIdea } from '@/features/dishes/utils/dish-presentation';
 
 type FulfillmentOptionsProps = {
   idea: string;
 };
 
 export function FulfillmentOptions({ idea }: FulfillmentOptionsProps) {
+  const router = useRouter();
   const [kitDialogOpen, setKitDialogOpen] = useState(false);
   const kitButtonRef = useRef<HTMLButtonElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
@@ -46,6 +49,11 @@ export function FulfillmentOptions({ idea }: FulfillmentOptionsProps) {
     };
   }, [closeDialog, kitDialogOpen]);
 
+  function openDishes() {
+    const servings = parseServingsFromIdea(idea);
+    router.push(`/platos${buildFlowQuery(idea, servings)}`);
+  }
+
   return (
     <div className="mt-8 border-t border-home-border pt-8">
       <p className="text-[12px] font-medium tracking-[0.18em] text-home-green sm:text-[13px]">
@@ -65,8 +73,8 @@ export function FulfillmentOptions({ idea }: FulfillmentOptionsProps) {
           title="Te lo damos hecho"
           description="Elige un plato, personaliza sus ingredientes y lo preparamos al momento."
           actionLabel="Ver platos"
+          onAction={openDishes}
           icon={<Sparkles aria-hidden="true" className="size-6" strokeWidth={1.75} />}
-          // La web todavía no tiene pantalla de catálogo. El listado vive en GET /api/v1/dishes.
         />
         <FulfillmentCard
           variant="kit"

@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useSearchParams } from 'next/navigation';
+import { Suspense, useState } from 'react';
 import { DeliveryNotice } from '@/features/home/components/DeliveryNotice';
 import { FulfillmentOptions } from '@/features/home/components/FulfillmentOptions';
 import { MealIdeaForm } from '@/features/home/components/MealIdeaForm';
@@ -10,9 +11,9 @@ import { StorefrontHighlights } from '@/features/home/components/StorefrontHighl
 
 const INITIAL_IDEA = 'Pasta para 4';
 
-export default function Home() {
-  const [draft, setDraft] = useState(INITIAL_IDEA);
-  const [confirmedIdea, setConfirmedIdea] = useState(INITIAL_IDEA);
+function HomeContent({ initialIdea }: { initialIdea: string }) {
+  const [draft, setDraft] = useState(initialIdea);
+  const [confirmedIdea, setConfirmedIdea] = useState(initialIdea);
   const [error, setError] = useState<string | null>(null);
 
   function confirmIdea(value: string) {
@@ -54,5 +55,25 @@ export default function Home() {
         <StorefrontHighlights />
       </main>
     </div>
+  );
+}
+
+function HomeWithParams() {
+  const searchParams = useSearchParams();
+  const idea = searchParams.get('idea')?.trim() || INITIAL_IDEA;
+  return <HomeContent key={idea} initialIdea={idea} />;
+}
+
+export default function Home() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center text-home-muted">
+          Cargando…
+        </div>
+      }
+    >
+      <HomeWithParams />
+    </Suspense>
   );
 }

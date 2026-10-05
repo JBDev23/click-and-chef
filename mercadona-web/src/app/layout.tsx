@@ -1,4 +1,6 @@
 import type { Metadata } from 'next';
+import { AppProviders } from '@/lib/providers';
+import { CartDrawer } from '@/features/cart/components/CartDrawer';
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -13,7 +15,12 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="es" className="h-full antialiased">
-      <body className="flex min-h-full flex-col bg-white font-sans text-home-ink">{children}</body>
+      <body className="flex min-h-full flex-col bg-white font-sans text-home-ink">
+        <AppProviders>
+          {children}
+          <CartDrawer />
+        </AppProviders>
+      </body>
     </html>
   );
 }
