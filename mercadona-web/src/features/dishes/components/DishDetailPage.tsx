@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useMemo, useState } from 'react';
 import { MercadonaHeader } from '@/features/home/components/MercadonaHeader';
+import { PageLoader } from '@/features/shared/components/PageLoader';
 import { getDish, quoteDish } from '@/lib/api/dishes';
 import { listProductsByRole } from '@/lib/api/products';
 import type { Complement, DishDetail, MealConfiguration } from '@/lib/api/types';
@@ -304,6 +305,17 @@ export function DishDetailPage() {
     );
   }
 
+  if (dishQuery.isLoading) {
+    return (
+      <PageLoader
+        eyebrow="TE LO DAMOS HECHO"
+        title="Cargando el plato"
+        hint="Un momento, estamos montando el detalle."
+        variant="customize"
+      />
+    );
+  }
+
   return (
     <div className="min-h-screen bg-white">
       <MercadonaHeader />
@@ -311,10 +323,6 @@ export function DishDetailPage() {
         <Link href="/platos" className="text-[14px] font-medium text-home-green">
           ← Volver a platos
         </Link>
-
-        {dishQuery.isLoading ? (
-          <p className="mt-8 text-home-muted">Cargando plato…</p>
-        ) : null}
 
         {dishQuery.isError ? (
           <div className="mt-8 rounded-[12px] border border-red-200 bg-red-50 p-4 text-red-800">

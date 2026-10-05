@@ -1,12 +1,20 @@
-import { DishCatalog } from '@/features/dishes/components/DishCatalog';
+import { Suspense } from 'react';
+import { DishCatalogRoute } from '@/features/dishes/components/DishCatalogRoute';
+import { PageLoader } from '@/features/shared/components/PageLoader';
 
-type PlatosPageProps = {
-  searchParams: Promise<{ idea?: string; servings?: string }>;
-};
-
-export default async function PlatosPage({ searchParams }: PlatosPageProps) {
-  const params = await searchParams;
-  const idea = params.idea?.trim() || 'Pasta para 4';
-
-  return <DishCatalog idea={idea} servingsParam={params.servings} />;
+export default function PlatosPage() {
+  return (
+    <Suspense
+      fallback={
+        <PageLoader
+          eyebrow="TE LO DAMOS HECHO"
+          title="Buscando platos para ti"
+          hint="Estamos eligiendo opciones que encajan con tu idea."
+          variant="catalog"
+        />
+      }
+    >
+      <DishCatalogRoute />
+    </Suspense>
+  );
 }

@@ -4,13 +4,8 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
 import { useState } from 'react';
-import { useDishDetailQuery } from '@/features/dishes/hooks/use-dishes';
 import type { DishSummary } from '@/features/dishes/types/dish';
-import {
-  buildFlowQuery,
-  formatIngredientQuantity,
-  resolveDishImage,
-} from '@/features/dishes/utils/dish-presentation';
+import { buildFlowQuery, resolveDishImage } from '@/features/dishes/utils/dish-presentation';
 import { formatMoney } from '@/lib/money';
 
 type DishCardProps = {
@@ -20,11 +15,7 @@ type DishCardProps = {
 };
 
 export function DishCard({ dish, idea, servings }: DishCardProps) {
-  const detailQuery = useDishDetailQuery(dish.id);
   const [imageSrc, setImageSrc] = useState(resolveDishImage(dish.slug, dish.imageUrl));
-  const ingredientsSummary =
-    detailQuery.data?.ingredients.map((ingredient) => ingredient.name).join(' · ') ??
-    'Cargando ingredientes…';
 
   return (
     <article className="flex h-full flex-col overflow-hidden rounded-[20px] border border-home-border bg-white shadow-[0_10px_30px_rgba(33,78,82,0.06)]">
@@ -46,23 +37,6 @@ export function DishCard({ dish, idea, servings }: DishCardProps) {
           {dish.description}
         </p>
 
-        <div className="mt-4 border-t border-[#e8eee9] pt-3">
-          <p className="line-clamp-2 text-[13px] leading-snug text-[#6f6f6f]">
-            {detailQuery.isError ? 'No se han podido cargar los ingredientes.' : ingredientsSummary}
-          </p>
-          {detailQuery.data ? (
-            <p className="mt-2 text-[12px] text-home-muted">
-              Incluye{' '}
-              {detailQuery.data.ingredients
-                .map((ingredient) =>
-                  formatIngredientQuantity(ingredient.defaultQuantity, ingredient.unit),
-                )
-                .join(', ')}{' '}
-              por ración.
-            </p>
-          ) : null}
-        </div>
-
         <div className="mt-auto flex items-end justify-between gap-3 pt-5">
           <div>
             <p className="text-[18px] font-bold text-home-ink">
@@ -72,6 +46,7 @@ export function DishCard({ dish, idea, servings }: DishCardProps) {
           </div>
           <Link
             href={`/platos/${dish.id}/personalizar${buildFlowQuery(idea, servings)}`}
+            prefetch={false}
             className="inline-flex items-center gap-2 rounded-full bg-[#e7f6ee] px-4 py-2.5 text-[15px] font-medium text-home-green hover:bg-[#d8f0e4]"
           >
             Personalizar

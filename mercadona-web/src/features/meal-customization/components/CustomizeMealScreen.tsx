@@ -18,6 +18,7 @@ import {
 } from '@/features/meal-customization/hooks/use-complements';
 import { useMealQuote } from '@/features/meal-customization/hooks/use-meal-quote';
 import type { Complement } from '@/features/meal-customization/types/meal';
+import { PageLoader } from '@/features/shared/components/PageLoader';
 import { getErrorMessage } from '@/lib/api-client';
 import { formatMoney } from '@/lib/money';
 
@@ -44,11 +45,14 @@ export function CustomizeMealScreen({ dishId, idea, servings }: CustomizeMealScr
     [dish],
   );
 
-  if (dishQuery.isLoading || drinksQuery.isLoading || dessertsQuery.isLoading) {
+  if (dishQuery.isLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-white text-home-muted">
-        Cargando personalización…
-      </div>
+      <PageLoader
+        eyebrow="TE LO DAMOS HECHO"
+        title="Preparando tu plato"
+        hint="Ajustamos ingredientes, bebida y postre a tu gusto."
+        variant="customize"
+      />
     );
   }
 
@@ -75,6 +79,8 @@ export function CustomizeMealScreen({ dishId, idea, servings }: CustomizeMealScr
     );
   }
 
+  const complementsLoading = drinksQuery.isLoading || dessertsQuery.isLoading;
+
   return (
     <CustomizeMealForm
       key={dish.id}
@@ -87,6 +93,7 @@ export function CustomizeMealScreen({ dishId, idea, servings }: CustomizeMealScr
       onImageError={() => setImageSrc('/dishes/fallback.svg')}
       drinks={drinksQuery.data ?? []}
       desserts={dessertsQuery.data ?? []}
+      complementsLoading={complementsLoading}
       drinksError={drinksQuery.isError ? getErrorMessage(drinksQuery.error) : null}
       dessertsError={dessertsQuery.isError ? getErrorMessage(dessertsQuery.error) : null}
       onRetryDrinks={() => void drinksQuery.refetch()}
@@ -116,6 +123,7 @@ type CustomizeMealFormProps = {
   onImageError: () => void;
   drinks: Complement[];
   desserts: Complement[];
+  complementsLoading: boolean;
   drinksError: string | null;
   dessertsError: string | null;
   onRetryDrinks: () => void;
@@ -141,6 +149,7 @@ function CustomizeMealForm({
   onImageError,
   drinks,
   desserts,
+  complementsLoading,
   drinksError,
   dessertsError,
   onRetryDrinks,
@@ -167,6 +176,7 @@ function CustomizeMealForm({
     !meal.hasUnavailableIngredient &&
     !isAdding &&
     !showSuccessModal &&
+    !complementsLoading &&
     !drinksError &&
     !dessertsError;
 
@@ -294,14 +304,32 @@ function CustomizeMealForm({
 
             <section className="mt-8 border-t border-[#ececec] pt-6 pb-4">
               <h3 className="text-[18px] font-medium text-home-ink">Completa tu menú</h3>
-              {drinksError ? (
+              {complementsLoading ? (
+                <div className="mt-4 overflow-hidden rounded-2xl border border-home-border/70 bg-[#f7faf8] px-4 py-4">
+                  <div className="flex items-center gap-3">
+                    <span className="kit-typing-dots inline-flex items-center gap-1" aria-hidden="true">
+                      <span />
+                      <span />
+                      <span />
+                    </span>
+                    <p className="text-[14px] text-home-muted">Cargando bebida y postre…</p>
+                  </div>
+                  <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-3">
+                    <div className="kit-shimmer h-14 rounded-2xl" />
+                    <div className="kit-shimmer h-14 rounded-2xl" />
+                    <div className="kit-shimmer h-14 rounded-2xl" />
+                  </div>
+                </div>
+              ) : null}
+              {!complementsLoading && drinksError ? (
                 <div className="mt-3 text-[14px] text-[#b42318]">
                   {drinksError}{' '}
                   <button type="button" className="underline" onClick={onRetryDrinks}>
                     Reintentar
                   </button>
                 </div>
-              ) : (
+              ) : null}
+              {!complementsLoading && !drinksError ? (
                 <ComplementGroup
                   legend="Bebida"
                   noneLabel="Sin bebida"
@@ -310,15 +338,16 @@ function CustomizeMealForm({
                   onChange={meal.setDrinkProductId}
                   name="drink"
                 />
-              )}
-              {dessertsError ? (
+              ) : null}
+              {!complementsLoading && dessertsError ? (
                 <div className="mt-3 text-[14px] text-[#b42318]">
                   {dessertsError}{' '}
                   <button type="button" className="underline" onClick={onRetryDesserts}>
                     Reintentar
                   </button>
                 </div>
-              ) : (
+              ) : null}
+              {!complementsLoading && !dessertsError ? (
                 <ComplementGroup
                   legend="Postre"
                   noneLabel="Sin postre"
@@ -327,7 +356,7 @@ function CustomizeMealForm({
                   onChange={meal.setDessertProductId}
                   name="dessert"
                 />
-              )}
+              ) : null}
             </section>
 
             {meal.hasUnavailableIngredient ? (
