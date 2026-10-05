@@ -1,0 +1,22 @@
+@import 'tailwindcss';
+
+:root {
+  --mercadona-green: #00824B;
+  --mercadona-orange: #FFA100;
+  --mercadona-yellow: #FFC300;
+  --font-mercadona-logo: 'Frankfurter', var(--font-geist-sans), sans-serif;
+  --font-mercadona-text: 'Berliner', var(--font-geist-sans), sans-serif;
+}
+
+@theme {
+  --color-primary: var(--mercadona-green);
+  --color-secondary: var(--mercadona-orange);
+  
+  --color-mercadona-green: var(--mercadona-green);
+  --color-mercadona-orange: var(--mercadona-orange);
+  --color-mercadona-yellow: var(--mercadona-yellow);
+  
+  --font-sans: var(--font-geist-sans);
+  --font-mercadona-logo: var(--font-mercadona-logo);
+  --font-mercadona-text: var(--font-mercadona-text);
+}

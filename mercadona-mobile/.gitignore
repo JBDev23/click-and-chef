@@ -1,0 +1,65 @@
+# dependencias
+node_modules/
+
+# Expo
+.expo/
+dist/
+web-build/
+expo-env.d.ts
+
+# Native
+.kotlin/
+*.orig.*
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+
+# Metro
+.metro-health-check*
+
+# debug y logs
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+*.log
+
+# SO (macOS / Windows)
+.DS_Store
+Thumbs.db
+
+# variables de entorno locales
+.env
+.env*.local
+.env.development
+.env.production
+
+# typescript
+*.tsbuildinfo
+
+# carpetas nativas generadas automáticamente (Expo Prebuild / CNG)
+/ios
+/android
+
+# Archivos de base de datos locales (SQLite / WatermelonDB temp)
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3
+
+# IA configs
+claude/
+AGENTS.md
+CLAUDE.md
+
+# IDE
+.vscode/
+.idea/
+.cursor/
+.cursorrules
+.cursorignore
+.cursorignorerules
+.cursorignorerulesrules
+.cursorignorerulesrulesrules
+.cursorignorerulesrulesrulesrules

@@ -1,0 +1,31 @@
+name: CI Checks
+
+on:
+  push:
+    branches: ['main']
+  pull_request:
+    branches: ['main']
+
+jobs:
+  lint-and-typecheck:
+    name: Lint & TypeScript Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: ⚙️ Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: 📦 Install dependencies
+        run: npm ci --legacy-peer-deps
+
+      - name: 💅 Run Prettier & ESLint
+        run: npx eslint "src/**/*.{js,jsx,ts,tsx}"
+
+      - name: 🟦 Run TypeScript check
+        run: npx tsc --noEmit
