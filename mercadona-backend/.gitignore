@@ -36,3 +36,6 @@ build/
 ### SO (Windows / Mac) ###
 .DS_Store
 Thumbs.db
+.env
+.env.*
+!.env.example
