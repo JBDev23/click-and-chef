@@ -1,49 +1,19 @@
 'use client';
 
 import Link from 'next/link';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Package } from 'lucide-react';
 import { MercadonaHeader } from '@/features/home/components/MercadonaHeader';
-import { fetchKitCartLines, removeKitCartLine } from '@/lib/cart/kit-session';
-import { sumKitLineTotal } from '@/lib/cart/kit-storage';
-import { fetchCurrentCart, removeCurrentCartItem } from '@/lib/cart/session';
-import { formatEuro } from '@/lib/format';
-import { queryKeys } from '@/lib/query-keys';
+import { useCart } from '@/features/cart/hooks/use-cart';
+import { sumKitCartTotal, sumKitLineTotal } from '@/lib/cart/kit-storage';
+import { formatMoney } from '@/lib/money';
 
 export function CartPage() {
-  const queryClient = useQueryClient();
+  const { cart, kitLines, isLoading, removeItem, removeKitLine } = useCart();
 
-  const cartQuery = useQuery({
-    queryKey: queryKeys.cart,
-    queryFn: fetchCurrentCart,
-  });
-
-  const kitCartQuery = useQuery({
-    queryKey: queryKeys.kitCart,
-    queryFn: fetchKitCartLines,
-  });
-
-  const removeMutation = useMutation({
-    mutationFn: (itemId: number) => removeCurrentCartItem(itemId),
-    onSuccess: (cart) => {
-      queryClient.setQueryData(queryKeys.cart, cart);
-    },
-  });
-
-  const removeKitMutation = useMutation({
-    mutationFn: (lineId: string) => removeKitCartLine(lineId),
-    onSuccess: (lines) => {
-      queryClient.setQueryData(queryKeys.kitCart, lines);
-    },
-  });
-
-  const cart = cartQuery.data;
   const items = cart?.items ?? [];
-  const kitLines = kitCartQuery.data ?? [];
-
   const dishTotal = cart ? Number.parseFloat(cart.total) || 0 : 0;
-  const kitTotal = kitLines.reduce((sum, line) => sum + sumKitLineTotal(line), 0);
-  const grandTotal = dishTotal + kitTotal;
+  const kitTotal = sumKitCartTotal(kitLines);
+  const grandTotal = Math.round((dishTotal + kitTotal) * 100) / 100;
   const isEmpty = items.length === 0 && kitLines.length === 0;
 
   return (
@@ -55,17 +25,11 @@ export function CartPage() {
           Revisa tus platos y MercaKits antes de continuar.
         </p>
 
-        {cartQuery.isLoading || kitCartQuery.isLoading ? (
+        {isLoading && !cart ? (
           <p className="mt-10 text-home-muted">Cargando carrito…</p>
         ) : null}
 
-        {cartQuery.isError ? (
-          <div className="mt-10 rounded-[12px] border border-red-200 bg-red-50 p-4 text-red-800">
-            No se pudo cargar el carrito de platos.
-          </div>
-        ) : null}
-
-        {!cartQuery.isLoading && !kitCartQuery.isLoading && isEmpty ? (
+        {!isLoading && isEmpty ? (
           <div className="mt-10 rounded-[12px] border border-home-border bg-home-panel p-6">
             <p className="text-home-ink">Tu carrito está vacío.</p>
             <Link
@@ -98,20 +62,15 @@ export function CartPage() {
                             </p>
                             <h3 className="mt-1 text-[20px] font-medium text-home-ink">{line.plato}</h3>
                             <p className="mt-1 text-[13px] text-home-muted">“{line.userMessage}”</p>
-                            <p className="mt-1 text-[14px] text-home-muted">
-                              {line.products.length}{' '}
-                              {line.products.length === 1 ? 'producto' : 'productos'}
-                            </p>
                           </div>
                           <div className="text-right">
                             <p className="text-[18px] font-medium text-home-green">
-                              {formatEuro(String(sumKitLineTotal(line)))}
+                              {formatMoney(sumKitLineTotal(line))}
                             </p>
                             <button
                               type="button"
                               className="mt-2 block text-[13px] text-red-700"
-                              disabled={removeKitMutation.isPending}
-                              onClick={() => removeKitMutation.mutate(line.id)}
+                              onClick={() => void removeKitLine(line.id)}
                             >
                               Eliminar kit
                             </button>
@@ -170,20 +129,10 @@ export function CartPage() {
                             <p className="mt-1 text-[14px] text-home-muted">
                               {item.quantity} {item.quantity === 1 ? 'ración' : 'raciones'}
                             </p>
-                            {item.price.drink ? (
-                              <p className="mt-1 text-[13px] text-home-muted">
-                                Bebida: {item.price.drink.name}
-                              </p>
-                            ) : null}
-                            {item.price.dessert ? (
-                              <p className="mt-1 text-[13px] text-home-muted">
-                                Postre: {item.price.dessert.name}
-                              </p>
-                            ) : null}
                           </div>
                           <div className="text-right">
                             <p className="text-[18px] font-medium text-home-green">
-                              {formatEuro(item.price.total)}
+                              {formatMoney(item.price.total)}
                             </p>
                             <Link
                               href={`/platos/${item.dishId}`}
@@ -194,8 +143,7 @@ export function CartPage() {
                             <button
                               type="button"
                               className="mt-2 block text-[13px] text-red-700"
-                              disabled={removeMutation.isPending}
-                              onClick={() => removeMutation.mutate(item.id)}
+                              onClick={() => void removeItem(item.id)}
                             >
                               Eliminar
                             </button>
@@ -211,11 +159,11 @@ export function CartPage() {
             <aside className="h-fit rounded-[16px] border border-home-border bg-home-panel p-6">
               <h2 className="text-[18px] font-medium text-home-ink">Total</h2>
               <p className="mt-3 text-[28px] font-medium text-home-green">
-                {formatEuro(String(grandTotal))}
+                {formatMoney(grandTotal)}
               </p>
               {kitTotal > 0 ? (
                 <p className="mt-2 text-[13px] text-home-muted">
-                  Incluye {formatEuro(String(kitTotal))} en MercaKit
+                  Incluye {formatMoney(kitTotal)} en MercaKit
                 </p>
               ) : null}
               <p className="mt-2 text-[13px] text-home-muted">

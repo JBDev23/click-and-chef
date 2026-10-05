@@ -36,7 +36,9 @@ export function Modal({
     if (!open) return;
 
     const previousOverflow = document.body.style.overflow;
+    const previousHtmlOverflow = document.documentElement.style.overflow;
     document.body.style.overflow = 'hidden';
+    document.documentElement.style.overflow = 'hidden';
 
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
@@ -48,7 +50,8 @@ export function Modal({
     panelRef.current?.focus();
 
     return () => {
-      document.body.style.overflow = previousOverflow;
+      document.body.style.overflow = previousOverflow || '';
+      document.documentElement.style.overflow = previousHtmlOverflow || '';
       window.removeEventListener('keydown', onKeyDown);
     };
   }, [open, onClose]);

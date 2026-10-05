@@ -1,6 +1,11 @@
 import { Sparkles } from 'lucide-react';
 
-const QUICK_IDEAS = ['Cena rápida', 'Algo saludable', 'Pasta para 4'] as const;
+const QUICK_IDEAS = [
+  'Cena rápida',
+  'Algo saludable',
+  'Pasta para 4',
+  'Macarrones con carne y tomate',
+] as const;
 
 type QuickIdeasProps = {
   selectedIdea: string;

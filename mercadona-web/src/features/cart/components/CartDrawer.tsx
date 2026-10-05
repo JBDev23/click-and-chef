@@ -1,9 +1,10 @@
 'use client';
 
-import { Trash2, X } from 'lucide-react';
+import { Package, Trash2, X } from 'lucide-react';
 import { useEffect, useId, useRef } from 'react';
 import { useCart } from '@/features/cart/hooks/use-cart';
 import { formatIngredientQuantity } from '@/features/dishes/utils/dish-presentation';
+import { sumKitCartTotal, sumKitLineTotal } from '@/lib/cart/kit-storage';
 import { formatMoney } from '@/lib/money';
 
 export function CartDrawer() {
@@ -18,6 +19,8 @@ export function CartDrawer() {
     refreshCart,
     clearError,
     isLoading,
+    kitLines,
+    removeKitLine,
   } = useCart();
   const titleId = useId();
   const closeRef = useRef<HTMLButtonElement>(null);
@@ -30,7 +33,9 @@ export function CartDrawer() {
     previousFocus.current = document.activeElement as HTMLElement | null;
     closeRef.current?.focus();
     const previousOverflow = document.body.style.overflow;
+    const previousHtmlOverflow = document.documentElement.style.overflow;
     document.body.style.overflow = 'hidden';
+    document.documentElement.style.overflow = 'hidden';
 
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
@@ -39,7 +44,8 @@ export function CartDrawer() {
     };
     document.addEventListener('keydown', onKeyDown);
     return () => {
-      document.body.style.overflow = previousOverflow;
+      document.body.style.overflow = previousOverflow || '';
+      document.documentElement.style.overflow = previousHtmlOverflow || '';
       document.removeEventListener('keydown', onKeyDown);
       previousFocus.current?.focus();
     };
@@ -50,6 +56,10 @@ export function CartDrawer() {
   }
 
   const items = cart?.items ?? [];
+  const dishTotal = cart ? Number.parseFloat(cart.total) || 0 : 0;
+  const kitTotal = sumKitCartTotal(kitLines);
+  const grandTotal = Math.round((dishTotal + kitTotal) * 100) / 100;
+  const isEmpty = items.length === 0 && kitLines.length === 0;
 
   return (
     <div className="fixed inset-0 z-[60]" role="presentation">
@@ -115,51 +125,124 @@ export function CartDrawer() {
 
           {isLoading && !cart ? (
             <p className="text-home-muted">Cargando carrito…</p>
-          ) : items.length === 0 ? (
+          ) : isEmpty ? (
             <p className="text-home-muted">Tu carrito está vacío.</p>
           ) : (
-            <ul className="space-y-4">
-              {items.map((item) => (
-                <li key={item.id} className="rounded-2xl border border-home-border p-4">
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <h3 className="text-[17px] font-medium text-home-ink">{item.dishName}</h3>
-                      <p className="mt-1 text-[14px] text-home-muted">
-                        {item.quantity} {item.quantity === 1 ? 'ración' : 'raciones'}
-                      </p>
-                    </div>
-                    <button
-                      type="button"
-                      aria-label={`Eliminar ${item.dishName}`}
-                      onClick={() => void removeItem(item.id)}
-                      className="rounded-full p-2 text-home-muted hover:bg-[#f5f5f5] hover:text-home-ink"
-                    >
-                      <Trash2 className="size-4" aria-hidden="true" />
-                    </button>
-                  </div>
-
-                  <ul className="mt-3 space-y-1 text-[13px] text-home-muted">
-                    {item.price.ingredients.map((ingredient) => (
-                      <li key={ingredient.dishIngredientId}>
-                        {ingredient.name}:{' '}
-                        {formatIngredientQuantity(ingredient.selectedQuantity, ingredient.unit)}
+            <div className="space-y-6">
+              {kitLines.length > 0 ? (
+                <section>
+                  <p className="text-[11px] font-medium tracking-[0.12em] text-home-green uppercase">
+                    MercaKit
+                  </p>
+                  <ul className="mt-3 space-y-4">
+                    {kitLines.map((line) => (
+                      <li key={line.id} className="rounded-2xl border border-home-border p-4">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <p className="text-[11px] font-medium tracking-[0.1em] text-home-muted uppercase">
+                              Kit
+                            </p>
+                            <h3 className="text-[17px] font-medium text-home-ink">{line.plato}</h3>
+                            <p className="mt-1 truncate text-[13px] text-home-muted">
+                              “{line.userMessage}”
+                            </p>
+                          </div>
+                          <div className="flex shrink-0 flex-col items-end gap-1">
+                            <p className="text-[15px] font-medium text-home-green">
+                              {formatMoney(sumKitLineTotal(line))}
+                            </p>
+                            <button
+                              type="button"
+                              aria-label={`Eliminar kit ${line.plato}`}
+                              onClick={() => void removeKitLine(line.id)}
+                              className="rounded-full p-2 text-home-muted hover:bg-[#f5f5f5] hover:text-home-ink"
+                            >
+                              <Trash2 className="size-4" aria-hidden="true" />
+                            </button>
+                          </div>
+                        </div>
+                        <ul className="mt-3 space-y-2">
+                          {line.products.map((product) => (
+                            <li
+                              key={`${line.id}-${product.productId}`}
+                              className="flex items-center gap-2 text-[13px] text-home-muted"
+                            >
+                              <span className="flex size-8 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-home-panel">
+                                {product.mainImageUrl ? (
+                                  // eslint-disable-next-line @next/next/no-img-element
+                                  <img
+                                    src={product.mainImageUrl}
+                                    alt=""
+                                    className="size-full object-contain p-0.5"
+                                  />
+                                ) : (
+                                  <Package className="size-3.5 text-home-green/40" strokeWidth={1.5} />
+                                )}
+                              </span>
+                              <span className="min-w-0 flex-1 truncate">
+                                <span className="capitalize">{product.ingredient}</span>:{' '}
+                                {product.name}
+                              </span>
+                              <span className="shrink-0 text-home-green">{product.price}</span>
+                            </li>
+                          ))}
+                        </ul>
                       </li>
                     ))}
-                    <li>Bebida: {item.price.drink ? item.price.drink.name : 'Sin bebida'}</li>
-                    <li>Postre: {item.price.dessert ? item.price.dessert.name : 'Sin postre'}</li>
                   </ul>
+                </section>
+              ) : null}
 
-                  <div className="mt-3 flex items-end justify-between text-[14px]">
-                    <span className="text-home-muted">
-                      {formatMoney(item.price.unitPrice)} / ración
-                    </span>
-                    <span className="font-medium text-home-ink">
-                      {formatMoney(item.price.total)}
-                    </span>
-                  </div>
-                </li>
-              ))}
-            </ul>
+              {items.length > 0 ? (
+                <section>
+                  <p className="text-[11px] font-medium tracking-[0.12em] text-home-green uppercase">
+                    Platos
+                  </p>
+                  <ul className="mt-3 space-y-4">
+                    {items.map((item) => (
+                      <li key={item.id} className="rounded-2xl border border-home-border p-4">
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <h3 className="text-[17px] font-medium text-home-ink">{item.dishName}</h3>
+                            <p className="mt-1 text-[14px] text-home-muted">
+                              {item.quantity} {item.quantity === 1 ? 'ración' : 'raciones'}
+                            </p>
+                          </div>
+                          <button
+                            type="button"
+                            aria-label={`Eliminar ${item.dishName}`}
+                            onClick={() => void removeItem(item.id)}
+                            className="rounded-full p-2 text-home-muted hover:bg-[#f5f5f5] hover:text-home-ink"
+                          >
+                            <Trash2 className="size-4" aria-hidden="true" />
+                          </button>
+                        </div>
+
+                        <ul className="mt-3 space-y-1 text-[13px] text-home-muted">
+                          {item.price.ingredients.map((ingredient) => (
+                            <li key={ingredient.dishIngredientId}>
+                              {ingredient.name}:{' '}
+                              {formatIngredientQuantity(ingredient.selectedQuantity, ingredient.unit)}
+                            </li>
+                          ))}
+                          <li>Bebida: {item.price.drink ? item.price.drink.name : 'Sin bebida'}</li>
+                          <li>Postre: {item.price.dessert ? item.price.dessert.name : 'Sin postre'}</li>
+                        </ul>
+
+                        <div className="mt-3 flex items-end justify-between text-[14px]">
+                          <span className="text-home-muted">
+                            {formatMoney(item.price.unitPrice)} / ración
+                          </span>
+                          <span className="font-medium text-home-ink">
+                            {formatMoney(item.price.total)}
+                          </span>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              ) : null}
+            </div>
           )}
         </div>
 
@@ -167,9 +250,14 @@ export function CartDrawer() {
           <div className="flex items-end justify-between">
             <span className="text-[14px] text-home-muted">Total</span>
             <span className="text-[28px] leading-none font-bold text-home-ink">
-              {formatMoney(cart?.total ?? '0.00')}
+              {formatMoney(grandTotal)}
             </span>
           </div>
+          {kitTotal > 0 ? (
+            <p className="mt-2 text-[12px] text-home-muted">
+              Incluye {formatMoney(kitTotal)} en MercaKit
+            </p>
+          ) : null}
         </div>
       </aside>
     </div>

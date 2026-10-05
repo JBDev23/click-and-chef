@@ -14,8 +14,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="es" className="h-full antialiased">
-      <body className="flex min-h-full flex-col bg-white font-sans text-home-ink">
+    <html lang="es" className="min-h-full antialiased">
+      <body className="min-h-full bg-white font-sans text-home-ink">
         <AppProviders>
           {children}
           <CartDrawer />

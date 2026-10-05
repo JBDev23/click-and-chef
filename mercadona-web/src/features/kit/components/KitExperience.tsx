@@ -1,21 +1,20 @@
 'use client';
 
 import Link from 'next/link';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { Check, ChefHat, Package, RotateCcw, Send, Sparkles, X } from 'lucide-react';
 import { useEffect, useId, useRef, useState, type RefObject } from 'react';
 import { ApiError } from '@/lib/api/client';
 import { fetchLayaRecipe } from '@/lib/api/laya';
 import type { MatchedProduct } from '@/lib/api/types';
-import { addKitToCurrentCart } from '@/lib/cart/kit-session';
-import { queryKeys } from '@/lib/query-keys';
+import { useCart } from '@/features/cart/hooks/use-cart';
 import { KitHistoryCard, type KitHistoryTurn } from '@/features/kit/components/KitHistoryCard';
+import { KitLoadingAvatar, KitLoadingPanel } from '@/features/kit/components/KitLoadingPanel';
 import { KitSuccessModal } from '@/features/kit/components/KitSuccessModal';
 import { buildKitProductLines } from '@/features/kit/lib/kit-products';
 
 type KitExperienceProps = {
   idea: string;
-  open?: boolean;
   onClose: () => void;
   onViewDishes?: () => void;
 };
@@ -73,20 +72,6 @@ function KitMessageComposer({
         </form>
       </div>
     </div>
-  );
-}
-
-function TypingDots() {
-  return (
-    <span className="inline-flex items-center gap-1 px-1" aria-hidden="true">
-      {[0, 1, 2].map((i) => (
-        <span
-          key={i}
-          className="size-1.5 animate-bounce rounded-full bg-home-green/70"
-          style={{ animationDelay: `${i * 120}ms` }}
-        />
-      ))}
-    </span>
   );
 }
 
@@ -256,34 +241,18 @@ function IngredientBlock({
   );
 }
 
-function KitSkeleton() {
-  return (
-    <div className="space-y-3" aria-hidden="true">
-      {[0, 1, 2].map((i) => (
-        <div
-          key={i}
-          className="overflow-hidden rounded-[18px] border border-home-border/70 bg-white"
-          style={{ animationDelay: `${i * 80}ms` }}
-        >
-          <div className="h-11 animate-pulse bg-home-panel/80" />
-          <div className="flex gap-4 p-4">
-            <div className="size-[84px] animate-pulse rounded-[14px] bg-home-panel" />
-            <div className="flex-1 space-y-2 pt-1">
-              <div className="h-3 w-24 animate-pulse rounded-full bg-home-panel" />
-              <div className="h-4 w-[70%] animate-pulse rounded-full bg-home-panel" />
-              <div className="h-3 w-[45%] animate-pulse rounded-full bg-home-panel" />
-              <div className="h-5 w-16 animate-pulse rounded-full bg-home-panel" />
-            </div>
-          </div>
-        </div>
-      ))}
-    </div>
-  );
+function createSessionId() {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID();
+  }
+  return `kit-session-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
-export function KitExperience({ idea, open = true, onClose, onViewDishes }: KitExperienceProps) {
-  const queryClient = useQueryClient();
+export function KitExperience({ idea, onClose, onViewDishes }: KitExperienceProps) {
+  const { addKitLine } = useCart();
+  const [sessionId] = useState(createSessionId);
   const [started, setStarted] = useState(false);
+  const [isAddingToCart, setIsAddingToCart] = useState(false);
   const [activeIdea, setActiveIdea] = useState(idea);
   const [composeDraft, setComposeDraft] = useState(idea);
   const [history, setHistory] = useState<KitHistoryTurn[]>([]);
@@ -299,29 +268,13 @@ export function KitExperience({ idea, open = true, onClose, onViewDishes }: KitE
     return () => cancelAnimationFrame(frame);
   }, []);
 
-  useEffect(() => {
-    if (!open) return;
-    setActiveIdea(idea);
-    setComposeDraft(idea);
-    setHistory([]);
-    setUiPhase('results');
-    setShowSuccessModal(false);
-    setExcludedIngredients(new Set());
-  }, [open, idea]);
-
   const kitQuery = useQuery({
-    queryKey: ['laya', 'recipe', activeIdea],
+    queryKey: ['laya', 'recipe', sessionId, activeIdea],
     queryFn: () => fetchLayaRecipe(activeIdea),
-    enabled: open && Boolean(activeIdea.trim()),
+    enabled: Boolean(activeIdea.trim()),
     retry: false,
-    staleTime: 60_000,
-  });
-
-  const addKitMutation = useMutation({
-    mutationFn: addKitToCurrentCart,
-    onSuccess: (lines) => {
-      queryClient.setQueryData(queryKeys.kitCart, lines);
-    },
+    staleTime: 0,
+    gcTime: 0,
   });
 
   useEffect(() => {
@@ -397,18 +350,16 @@ export function KitExperience({ idea, open = true, onClose, onViewDishes }: KitE
   }
 
   function handleListo() {
-    if (!hasResult || recommendedCount === 0 || !platoName) return;
+    if (!hasResult || recommendedCount === 0 || !platoName || isAddingToCart) return;
     const products = buildKitProductLines(activeEntries);
-    addKitMutation.mutate(
-      {
-        plato: platoName,
-        userMessage: activeIdea,
-        products,
-      },
-      {
-        onSuccess: () => setShowSuccessModal(true),
-      },
-    );
+    setIsAddingToCart(true);
+    void addKitLine({
+      plato: platoName,
+      userMessage: activeIdea,
+      products,
+    })
+      .then(() => setShowSuccessModal(true))
+      .finally(() => setIsAddingToCart(false));
   }
 
   function handleContinueChat() {
@@ -523,9 +474,13 @@ export function KitExperience({ idea, open = true, onClose, onViewDishes }: KitE
         <div
           className={`flex gap-3 transition duration-500 delay-75 ${started ? 'translate-y-0 opacity-100' : 'translate-y-3 opacity-0'}`}
         >
-          <div className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-full bg-home-green text-white shadow-[0_8px_18px_rgba(63,137,96,0.25)]">
-            <Sparkles className="size-4" strokeWidth={1.75} />
-          </div>
+          {isLoading ? (
+            <KitLoadingAvatar />
+          ) : (
+            <div className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-full bg-home-green text-white shadow-[0_8px_18px_rgba(63,137,96,0.25)]">
+              <Sparkles className="size-4" strokeWidth={1.75} />
+            </div>
+          )}
           <article className="min-w-0 flex-1 rounded-[18px] rounded-tl-md border border-home-border/80 bg-white px-4 py-3.5 shadow-[0_8px_24px_rgba(33,78,82,0.04)] sm:px-5">
             <p className="text-[12px] font-medium text-home-green">MercaKit</p>
             <p className="mt-1.5 text-[15px] leading-relaxed text-home-ink">
@@ -539,16 +494,10 @@ export function KitExperience({ idea, open = true, onClose, onViewDishes }: KitE
                       : 'Listo. Aquí tienes los ingredientes y el producto recomendado para cada uno.'
                   : 'Voy a montar tu kit con las cantidades justas y los productos que mejor encajan.'}
             </p>
-            {isLoading ? (
-              <p className="mt-2 flex items-center gap-2 text-[13px] text-home-muted">
-                Seleccionando ingredientes
-                <TypingDots />
-              </p>
-            ) : null}
           </article>
         </div>
 
-        {isLoading ? <KitSkeleton /> : null}
+        {isLoading ? <KitLoadingPanel /> : null}
 
         {hasError && errorMessage ? (
           <article className="rounded-[18px] border border-amber-200 bg-amber-50 px-4 py-4 text-amber-950 sm:px-5">
@@ -739,10 +688,10 @@ export function KitExperience({ idea, open = true, onClose, onViewDishes }: KitE
               <button
                 type="button"
                 onClick={handleListo}
-                disabled={recommendedCount === 0 || addKitMutation.isPending}
+                disabled={recommendedCount === 0 || isAddingToCart}
                 className="inline-flex h-11 flex-1 items-center justify-center rounded-full bg-home-green px-5 text-[14px] font-medium text-white hover:bg-[#367854] disabled:cursor-not-allowed disabled:opacity-50 sm:flex-none"
               >
-                {addKitMutation.isPending ? 'Añadiendo…' : 'Listo'}
+                {isAddingToCart ? 'Añadiendo…' : 'Listo'}
               </button>
             </div>
           </div>

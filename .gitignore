@@ -1,0 +1,55 @@
+# Dependencies
+node_modules/
+
+# Env (keep examples)
+.env
+.env.*
+!.env.example
+!.env.template
+
+# Builds & caches
+.next/
+out/
+dist/
+build/
+.turbo/
+.expo/
+coverage/
+*.tsbuildinfo
+.eslintcache
+.stylelintcache
+
+# Java / Maven
+target/
+*.class
+*.jar
+*.war
+!mercadona-backend/.mvn/wrapper/maven-wrapper.jar
+
+# Logs & OS
+*.log
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE / editors
+.idea/
+.vscode/
+*.iml
+*.iws
+*.ipr
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+.project
+.settings/
+.classpath
+.factorypath
+
+# Vercel / local tooling
+.vercel/
+.cursor/
+AGENTS.md
+CLAUDE.md

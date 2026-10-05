@@ -41,11 +41,29 @@ export function writeKitCartLines(lines: KitCartLine[]): void {
 }
 
 export function parsePriceAmount(price: string): number {
-  const normalized = price.replace(/[^\d,.-]/g, '').replace(',', '.');
+  const cleaned = price.replace(/[^\d,.-]/g, '');
+  if (!cleaned) {
+    return 0;
+  }
+
+  // Spanish retail prices: "1,25 €" or "1.234,56 €". Dot-decimal "1.25" also works.
+  let normalized = cleaned;
+  if (cleaned.includes(',') && cleaned.includes('.')) {
+    normalized = cleaned.replace(/\./g, '').replace(',', '.');
+  } else if (cleaned.includes(',')) {
+    normalized = cleaned.replace(',', '.');
+  }
+
   const value = Number(normalized);
   return Number.isFinite(value) ? value : 0;
 }
 
 export function sumKitLineTotal(line: KitCartLine): number {
-  return line.products.reduce((sum, product) => sum + parsePriceAmount(product.price), 0);
+  const total = line.products.reduce((sum, product) => sum + parsePriceAmount(product.price), 0);
+  return Math.round(total * 100) / 100;
+}
+
+export function sumKitCartTotal(lines: KitCartLine[]): number {
+  const total = lines.reduce((sum, line) => sum + sumKitLineTotal(line), 0);
+  return Math.round(total * 100) / 100;
 }

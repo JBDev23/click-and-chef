@@ -14,6 +14,13 @@ import { addDishToCart, createCart, deleteCartItem, fetchCart } from '@/features
 import type { Cart, CartIdentity } from '@/features/cart/types/cart';
 import type { MealConfiguration } from '@/features/meal-customization/types/meal';
 import { getErrorMessage, getProblemDetail } from '@/lib/api-client';
+import {
+  addKitToCurrentCart,
+  countKitCartProducts,
+  removeKitCartLine,
+  type AddKitToCartInput,
+} from '@/lib/cart/kit-session';
+import { readKitCartLines, type KitCartLine } from '@/lib/cart/kit-storage';
 
 const STORAGE_KEY = 'mercadona.cart.v1';
 
@@ -32,7 +39,10 @@ type CartContextValue = {
   refreshCart: () => Promise<void>;
   recoverCart: () => Promise<void>;
   addConfiguredDish: (dishId: number, configuration: MealConfiguration) => Promise<Cart>;
+  addKitLine: (input: AddKitToCartInput) => Promise<KitCartLine[]>;
   removeItem: (itemId: number) => Promise<void>;
+  removeKitLine: (lineId: string) => Promise<void>;
+  kitLines: KitCartLine[];
   itemCount: number;
 };
 
@@ -76,6 +86,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const [isPanelOpen, setIsPanelOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [needsRecovery, setNeedsRecovery] = useState(false);
+  const [kitLines, setKitLines] = useState<KitCartLine[]>([]);
   const createPromiseRef = useRef<Promise<CartIdentity> | null>(null);
 
   const applyIdentity = useCallback((next: CartIdentity | null) => {
@@ -116,6 +127,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
         return;
       }
       setIdentity(stored);
+      setKitLines(readKitCartLines());
       setIsHydrated(true);
       if (stored) {
         void loadCart(stored);
@@ -188,6 +200,20 @@ export function CartProvider({ children }: { children: ReactNode }) {
     [identity],
   );
 
+  const addKitLine = useCallback(async (input: AddKitToCartInput) => {
+    const updated = await addKitToCurrentCart(input);
+    setKitLines(updated);
+    setError(null);
+    setIsPanelOpen(true);
+    return updated;
+  }, []);
+
+  const removeKitLine = useCallback(async (lineId: string) => {
+    const updated = await removeKitCartLine(lineId);
+    setKitLines(updated);
+    setError(null);
+  }, []);
+
   const recoverCart = useCallback(async () => {
     applyIdentity(null);
     setCart(null);
@@ -225,21 +251,29 @@ export function CartProvider({ children }: { children: ReactNode }) {
       },
       recoverCart,
       addConfiguredDish,
+      addKitLine,
       removeItem,
-      itemCount: cart?.items.reduce((sum, item) => sum + item.quantity, 0) ?? 0,
+      removeKitLine,
+      kitLines,
+      itemCount:
+        (cart?.items.reduce((sum, item) => sum + item.quantity, 0) ?? 0) +
+        countKitCartProducts(kitLines),
     }),
     [
       addConfiguredDish,
+      addKitLine,
       cart,
       error,
       identity,
       isHydrated,
       isLoading,
       isPanelOpen,
+      kitLines,
       loadCart,
       needsRecovery,
       recoverCart,
       removeItem,
+      removeKitLine,
     ],
   );
 

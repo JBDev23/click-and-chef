@@ -2,6 +2,7 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { ArrowLeft, Minus, Plus, X } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useCart } from '@/features/cart/hooks/use-cart';
@@ -9,6 +10,7 @@ import { useDishDetailQuery } from '@/features/dishes/hooks/use-dishes';
 import type { Ingredient } from '@/features/dishes/types/dish';
 import { buildFlowQuery, resolveDishImage } from '@/features/dishes/utils/dish-presentation';
 import { ComplementGroup } from '@/features/meal-customization/components/ComplementGroup';
+import { DishSuccessModal } from '@/features/meal-customization/components/DishSuccessModal';
 import { IngredientStepper } from '@/features/meal-customization/components/IngredientStepper';
 import {
   useDessertsQuery,
@@ -26,13 +28,14 @@ type CustomizeMealScreenProps = {
 };
 
 export function CustomizeMealScreen({ dishId, idea, servings }: CustomizeMealScreenProps) {
+  const router = useRouter();
   const dishQuery = useDishDetailQuery(dishId);
   const drinksQuery = useDrinksQuery();
   const dessertsQuery = useDessertsQuery();
   const { addConfiguredDish } = useCart();
   const [addError, setAddError] = useState<string | null>(null);
-  const [addSuccess, setAddSuccess] = useState(false);
   const [isAdding, setIsAdding] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [imageSrc, setImageSrc] = useState<string | null>(null);
 
   const dish = dishQuery.data;
@@ -91,10 +94,14 @@ export function CustomizeMealScreen({ dishId, idea, servings }: CustomizeMealScr
       addConfiguredDish={addConfiguredDish}
       addError={addError}
       setAddError={setAddError}
-      addSuccess={addSuccess}
-      setAddSuccess={setAddSuccess}
       isAdding={isAdding}
       setIsAdding={setIsAdding}
+      showSuccessModal={showSuccessModal}
+      setShowSuccessModal={setShowSuccessModal}
+      onViewDishes={(nextServings) =>
+        router.push(`/platos${buildFlowQuery(idea, nextServings)}`)
+      }
+      onGoHome={() => router.push('/')}
     />
   );
 }
@@ -116,10 +123,12 @@ type CustomizeMealFormProps = {
   addConfiguredDish: ReturnType<typeof useCart>['addConfiguredDish'];
   addError: string | null;
   setAddError: (value: string | null) => void;
-  addSuccess: boolean;
-  setAddSuccess: (value: boolean) => void;
   isAdding: boolean;
   setIsAdding: (value: boolean) => void;
+  showSuccessModal: boolean;
+  setShowSuccessModal: (value: boolean) => void;
+  onViewDishes: (servings: number) => void;
+  onGoHome: () => void;
 };
 
 function CustomizeMealForm({
@@ -139,10 +148,12 @@ function CustomizeMealForm({
   addConfiguredDish,
   addError,
   setAddError,
-  addSuccess,
-  setAddSuccess,
   isAdding,
   setIsAdding,
+  showSuccessModal,
+  setShowSuccessModal,
+  onViewDishes,
+  onGoHome,
 }: CustomizeMealFormProps) {
   const meal = useMealQuote({
     dishId,
@@ -155,6 +166,7 @@ function CustomizeMealForm({
     !meal.isQuoting &&
     !meal.hasUnavailableIngredient &&
     !isAdding &&
+    !showSuccessModal &&
     !drinksError &&
     !dessertsError;
 
@@ -164,10 +176,9 @@ function CustomizeMealForm({
     }
     setIsAdding(true);
     setAddError(null);
-    setAddSuccess(false);
     try {
       await addConfiguredDish(dishId, meal.configuration);
-      setAddSuccess(true);
+      setShowSuccessModal(true);
     } catch (error) {
       setAddError(getErrorMessage(error, 'No hemos podido añadir el plato al carrito.'));
     } finally {
@@ -177,6 +188,13 @@ function CustomizeMealForm({
 
   return (
     <div className="min-h-screen bg-white lg:grid lg:h-screen lg:grid-cols-[46%_54%] lg:overflow-hidden">
+      <DishSuccessModal
+        open={showSuccessModal}
+        dishName={dishName}
+        servings={meal.servings}
+        onViewDishes={() => onViewDishes(meal.servings)}
+        onGoHome={onGoHome}
+      />
       <div className="relative h-[240px] overflow-hidden bg-[#1d1d1d] sm:h-[320px] lg:h-full">
         <Image
           src={imageSrc}
@@ -325,11 +343,6 @@ function CustomizeMealForm({
             {addError ? (
               <p className="mt-4 text-[14px] text-[#b42318]" role="alert">
                 {addError}
-              </p>
-            ) : null}
-            {addSuccess ? (
-              <p className="mt-4 text-[14px] text-home-green" role="status" aria-live="polite">
-                Plato añadido al carrito.
               </p>
             ) : null}
           </div>

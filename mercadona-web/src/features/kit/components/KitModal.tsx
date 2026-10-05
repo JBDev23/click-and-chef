@@ -19,7 +19,10 @@ export function KitModal({ idea, open, onClose, onViewDishes }: KitModalProps) {
       <h2 id={titleId} className="sr-only">
         MercaKit
       </h2>
-      <KitExperience idea={idea} open={open} onClose={onClose} onViewDishes={onViewDishes} />
+      {/* Remount on each open so conversation + loading start from zero */}
+      {open ? (
+        <KitExperience idea={idea} onClose={onClose} onViewDishes={onViewDishes} />
+      ) : null}
     </Modal>
   );
 }

@@ -2,14 +2,14 @@ import { CustomizeMealScreen } from '@/features/meal-customization/components/Cu
 import { parseServingsFromIdea } from '@/features/dishes/utils/dish-presentation';
 
 type CustomizePageProps = {
-  params: Promise<{ dishId: string }>;
+  params: Promise<{ id: string }>;
   searchParams: Promise<{ idea?: string; servings?: string }>;
 };
 
 export default async function CustomizePage({ params, searchParams }: CustomizePageProps) {
-  const { dishId: dishIdParam } = await params;
+  const { id: idParam } = await params;
   const query = await searchParams;
-  const dishId = Number(dishIdParam);
+  const dishId = Number(idParam);
   const idea = query.idea?.trim() || 'Pasta para 4';
   const servingsFromQuery = Number(query.servings);
   const servings =

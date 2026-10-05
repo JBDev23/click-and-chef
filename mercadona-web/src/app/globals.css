@@ -57,6 +57,147 @@
   animation: kit-fade-in 420ms ease-out both;
 }
 
+@keyframes kit-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+.kit-shimmer {
+  background: linear-gradient(
+    90deg,
+    #e8f3ec 0%,
+    #f4faf7 35%,
+    #ffffff 50%,
+    #f4faf7 65%,
+    #e8f3ec 100%
+  );
+  background-size: 200% 100%;
+  animation: kit-shimmer 1.5s ease-in-out infinite;
+}
+
+@keyframes kit-progress-indeterminate {
+  0% {
+    left: -45%;
+  }
+  100% {
+    left: 105%;
+  }
+}
+
+.kit-progress-indeterminate {
+  animation: kit-progress-indeterminate 1.8s ease-in-out infinite;
+}
+
+@keyframes kit-loading-card-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.kit-loading-card {
+  animation: kit-loading-card-in 0.55s ease-out both;
+}
+
+@keyframes kit-step-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.kit-step-label {
+  display: inline-block;
+  animation: kit-step-in 0.35s ease-out both;
+}
+
+@keyframes kit-pulse-ring {
+  0%,
+  100% {
+    transform: scale(0.92);
+    opacity: 0.45;
+  }
+  50% {
+    transform: scale(1.18);
+    opacity: 0.12;
+  }
+}
+
+.kit-pulse-ring {
+  animation: kit-pulse-ring 2s ease-in-out infinite;
+}
+
+@keyframes kit-float-icon {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-2px);
+  }
+}
+
+.kit-float-icon {
+  animation: kit-float-icon 2.4s ease-in-out infinite;
+}
+
+@keyframes kit-loading-panel-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.kit-loading-panel {
+  animation: kit-loading-panel-in 0.5s ease-out both;
+}
+
+.kit-typing-dots span {
+  display: block;
+  width: 4px;
+  height: 4px;
+  border-radius: 9999px;
+  background: #4aa675;
+  animation: kit-dot-bounce 1.2s ease-in-out infinite;
+}
+
+.kit-typing-dots span:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.kit-typing-dots span:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+@keyframes kit-dot-bounce {
+  0%,
+  60%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.45;
+  }
+  30% {
+    transform: translateY(-4px);
+    opacity: 1;
+  }
+}
+
 @media (min-width: 768px) {
   .home-shell {
     padding-inline: 32px;
