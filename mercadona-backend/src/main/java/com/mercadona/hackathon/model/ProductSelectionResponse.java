@@ -1,15 +1,15 @@
 package com.mercadona.hackathon.model;
 
-import lombok.Data;
 import java.util.List;
+import lombok.Data;
 
 @Data
 public class ProductSelectionResponse {
-    private List<Selection> selecciones;
+  private List<Selection> selecciones;
 
-    @Data
-    public static class Selection {
-        private String ingrediente;
-        private List<String> ids;
-    }
+  @Data
+  public static class Selection {
+    private String ingrediente;
+    private List<String> ids;
+  }
 }
